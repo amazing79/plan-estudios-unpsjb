@@ -19,6 +19,7 @@ export default function ModalBienvenida({
     );
     const [facultadSeleccionada, setFacultadSeleccionada] = useState("");
     const [nombreCarreraSeleccionada, setNombreCarreraSeleccionada] = useState("");
+    const basePath =  process.env.NEXT_PUBLIC_BASE_URL;
 
     const carrerasPorFacultad = carreras
         .filter((c) => c.facultad === facultadSeleccionada)
@@ -35,7 +36,7 @@ export default function ModalBienvenida({
                 <div className="mb-8 text-center">
                     <div className="mx-auto mb-4 flex h-32 w-32 items-center justify-center drop-shadow-sm dark:drop-shadow-lg">
                         <Image
-                            src="/logo512.png"
+                            src={ basePath + "/logo512.png" }
                             alt="Logo UNPSJB"
                             width={128}
                             height={128}

@@ -7,7 +7,9 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+  basePath: "/node/planes",
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

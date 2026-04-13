@@ -243,7 +243,7 @@ export function InstructionsModal({ isOpen, onClose }: ModalInfoProps) {
             <div className="flex flex-col md:aspect-[5/4] md:min-h-[450px] overflow-hidden rounded-[1.25rem] md:rounded-[1.75rem] bg-white dark:bg-slate-900 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800">
                 <div className="relative h-48 sm:h-64 md:h-[55%] shrink-0 overflow-hidden bg-gradient-to-br from-slate-100 via-white to-slate-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-950">
                     <Image
-                        src={steps[activeStep].image}
+                        src={process.env.NEXT_PUBLIC_BASE_URL + steps[activeStep].image}
                         alt={steps[activeStep].title}
                         fill
                         className="object-cover opacity-90 dark:opacity-100"
