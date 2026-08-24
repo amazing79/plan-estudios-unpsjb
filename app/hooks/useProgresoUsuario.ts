@@ -11,7 +11,7 @@ interface ProgresoUsuario {
     optativas: Record<string, string>;
 }
 
-const STORAGE_KEY = "plan-estudios-progress";
+export const STORAGE_KEY = "plan-estudios-progress";
 
 /**
  * Migra el formato antiguo (keys sin namespace) al nuevo formato (carrera:codigo).

@@ -10,6 +10,7 @@ import FormatListBulletedOutlinedIcon from '@mui/icons-material/FormatListBullet
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 
 export interface HeaderProps {
     carreras: Carrera[];
@@ -21,6 +22,7 @@ export interface HeaderProps {
     onShowCode?: () => void;
     onShowContact?: () => void;
     onShowInstructions?: () => void;
+    onBorrarDatos?: () => void;
 }
 
 export default function Header({
@@ -33,6 +35,7 @@ export default function Header({
     onShowCode,
     onShowContact,
     onShowInstructions,
+    onBorrarDatos,
 }: HeaderProps) {
     const facultades = [...new Set(carreras.map((c) => c.facultad))].sort((a, b) =>
         (FACULTAD_NOMBRES[a] || a).localeCompare(FACULTAD_NOMBRES[b] || b, "es")
@@ -140,6 +143,14 @@ export default function Header({
                     >
                         <MailOutlineIcon className="!h-4 !w-4 md:!h-5 md:!w-5" />
                         <span className="text-xs font-semibold md:text-sm">Contacto</span>
+                    </button>
+                    <button
+                        onClick={onBorrarDatos}
+                        className="flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1.5 text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400 dark:focus:bg-red-500/10 dark:focus:text-red-400"
+                        title="Borrar datos guardados"
+                    >
+                        <DeleteOutlineOutlinedIcon className="!h-4 !w-4 md:!h-5 md:!w-5" />
+                        <span className="text-xs font-semibold md:text-sm">Borrar datos</span>
                     </button>
                 </div>
             </div>

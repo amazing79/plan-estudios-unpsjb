@@ -2,11 +2,13 @@
 
 import { useMemo, useEffect, useRef, useState } from "react";
 import type { Materia, EstadoMateria, RequisitoComplementario } from "../types";
+import { obtenerMateriasVisibles, obtenerMateriasOptativas } from "../lib/diagrama";
 
 export interface WidgetProgresoProps {
     materias: Materia[];
     requisitos?: RequisitoComplementario[];
     getEstado: (codigo: string) => EstadoMateria;
+    getOptativaElegida?: (slotCodigo: string) => string | undefined;
 }
 
 function useNumeroAnimado(objetivo: number, duracion = 800) {
@@ -43,35 +45,42 @@ function useNumeroAnimado(objetivo: number, duracion = 800) {
     return mostrado;
 }
 
-export default function WidgetProgreso({ materias, requisitos = [], getEstado }: WidgetProgresoProps) {
+export default function WidgetProgreso({ materias, requisitos = [], getEstado, getOptativaElegida }: WidgetProgresoProps) {
     const { aprobadas, total, pct, finalesPendientes } = useMemo(() => {
-        const regulares = materias.filter((m) => !m.esOptativa);
+        const items = obtenerMateriasVisibles(materias);
+        const opcionesPool = obtenerMateriasOptativas(materias);
 
-        const grupos = [
+        const estadoDeItem = (m: Materia): EstadoMateria => {
+            if (m.esOptativa && m.grupoOptativa) {
+                const elegida = getOptativaElegida?.(m.codigo);
+                return elegida ? getEstado(elegida) : "pendiente";
+            }
+            return getEstado(m.codigo);
+        };
+        const gruposConSlot = new Set(
+            items.map((m) => m.grupoOptativa).filter((g): g is string => Boolean(g))
+        );
+        const gruposSinSlot = [
             ...new Set(
-                materias
-                    .filter((m) => m.esOptativa && m.codigo !== "OP1" && m.codigo !== "OP2")
+                opcionesPool
                     .map((m) => m.grupoOptativa)
                     .filter((g): g is string => Boolean(g))
             ),
-        ];
+        ].filter((g) => !gruposConSlot.has(g));
 
-        const totalItems = regulares.length + grupos.length + requisitos.length;
+        const grupoTieneEstado = (grupo: string, estado: EstadoMateria) =>
+            opcionesPool.some(
+                (m) => m.grupoOptativa === grupo && getEstado(m.codigo) === estado
+            );
 
-        const aprobRegulares = regulares.filter(
-            (m) => getEstado(m.codigo) === "aprobada"
+        const totalItems = items.length + gruposSinSlot.length + requisitos.length;
+
+        const aprobMaterias = items.filter(
+            (m) => estadoDeItem(m) === "aprobada"
         ).length;
 
-        const aprobOptativas = grupos.filter((grupo) =>
-            materias
-                .filter(
-                    (m) =>
-                        m.esOptativa &&
-                        m.grupoOptativa === grupo &&
-                        m.codigo !== "OP1" &&
-                        m.codigo !== "OP2"
-                )
-                .some((m) => getEstado(m.codigo) === "aprobada")
+        const aprobGruposSinSlot = gruposSinSlot.filter(
+            (g) => grupoTieneEstado(g, "aprobada")
         ).length;
 
         const aprobRequisitos = requisitos.filter(
@@ -79,17 +88,20 @@ export default function WidgetProgreso({ materias, requisitos = [], getEstado }:
         ).length;
 
         let pendientes = 0;
-        materias.forEach(m => {
-            if (getEstado(m.codigo) === "regular") pendientes++;
+        items.forEach(m => {
+            if (estadoDeItem(m) === "regular") pendientes++;
+        });
+        gruposSinSlot.forEach(g => {
+            if (!grupoTieneEstado(g, "aprobada") && grupoTieneEstado(g, "regular")) pendientes++;
         });
         requisitos.forEach(r => {
             if (getEstado(r.codigo) === "regular") pendientes++;
         });
 
-        const cursadasAprobadas = aprobRegulares + aprobOptativas + aprobRequisitos;
+        const cursadasAprobadas = aprobMaterias + aprobGruposSinSlot + aprobRequisitos;
         const porcentaje = totalItems === 0 ? 0 : (cursadasAprobadas / totalItems) * 100;
         return { aprobadas: cursadasAprobadas, total: totalItems, pct: porcentaje, finalesPendientes: pendientes };
-    }, [materias, requisitos, getEstado]);
+    }, [materias, requisitos, getEstado, getOptativaElegida]);
 
     const pctAnimado = useNumeroAnimado(pct);
 
