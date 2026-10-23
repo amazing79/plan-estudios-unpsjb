@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { Carrera } from "./types";
-import { useProgresoUsuario } from "./hooks/useProgresoUsuario";
+import { useProgresoUsuario, STORAGE_KEY } from "./hooks/useProgresoUsuario";
 import Header from "./components/Header";
 import DiagramaPlan from "./components/DiagramaPlan";
 import ListaPlan from "./components/ListaPlan";
@@ -10,7 +10,7 @@ import ModalBienvenida from "./components/ModalBienvenida";
 import carrerasPorFacultad from "./data";
 import WidgetProgreso from "./components/WidgetProgreso";
 import SeccionRequisitos from "./components/SeccionRequisitos";
-import { ContactModal, CodeModal, InstructionsModal } from "./components/ModalInfo";
+import { ContactModal, CodeModal, InstructionsModal, ConfirmarBorradoModal } from "./components/ModalInfo";
 
 const carreras = Object.values(carrerasPorFacultad).flat();
 
@@ -22,6 +22,7 @@ export default function Home() {
   const [showContact, setShowContact] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showConfirmarBorrado, setShowConfirmarBorrado] = useState(false);
 
   const {
     progreso,
@@ -44,6 +45,16 @@ export default function Home() {
 
   const carreraSeleccionada: Carrera | null =
     carreras.find((c) => c.nombre === nombreCarreraAMostrar) ?? null;
+
+  const conteoAprobadas = useMemo(
+    () => carreraSeleccionada?.materias.filter((m) => getEstado(m.codigo) === "aprobada").length ?? 0,
+    [carreraSeleccionada, getEstado]
+  );
+
+  const handleBorrarDatos = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.reload();
+  };
 
   const handleSeleccionarCarreraOnboarding = (carrera: Carrera) => {
     setCarrera(carrera.nombre, carrera.facultad);
@@ -75,6 +86,7 @@ export default function Home() {
         onShowCode={() => setShowCode(true)}
         onShowContact={() => setShowContact(true)}
         onShowInstructions={() => setShowInstructions(true)}
+        onBorrarDatos={() => setShowConfirmarBorrado(true)}
       />
 
       {carreraSeleccionada ? (
@@ -103,12 +115,14 @@ export default function Home() {
               requisitos={carreraSeleccionada.requisitos}
               getEstado={getEstado}
               handleCicloEstado={(codigo) => handleCicloEstado(codigo, true)}
+              conteoAprobadas={conteoAprobadas}
             />
           )}
           <WidgetProgreso
             materias={carreraSeleccionada.materias}
             requisitos={carreraSeleccionada.requisitos}
             getEstado={getEstado}
+            getOptativaElegida={getOptativaElegida}
           />
         </>
       ) : (
@@ -122,6 +136,11 @@ export default function Home() {
       <CodeModal isOpen={showCode} onClose={() => setShowCode(false)} />
       <ContactModal isOpen={showContact} onClose={() => setShowContact(false)} />
       <InstructionsModal isOpen={showInstructions} onClose={() => setShowInstructions(false)} />
+      <ConfirmarBorradoModal
+        isOpen={showConfirmarBorrado}
+        onClose={() => setShowConfirmarBorrado(false)}
+        onConfirm={handleBorrarDatos}
+      />
     </div>
   );
 }

@@ -9,6 +9,74 @@ interface ModalInfoProps {
     onClose: () => void;
 }
 
+interface ModalConfirmacionProps extends ModalInfoProps {
+    onConfirm: () => void;
+}
+
+export function ConfirmarBorradoModal({ isOpen, onClose, onConfirm }: ModalConfirmacionProps) {
+    const dialogRef = useRef<HTMLDialogElement>(null);
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+
+        if (isOpen) {
+            dialog.showModal();
+        } else {
+            dialog.close();
+        }
+    }, [isOpen]);
+
+    const handleClose = () => {
+        onClose();
+    };
+
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+        if (e.target === dialogRef.current) {
+            handleClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <dialog
+            ref={dialogRef}
+            onCancel={handleClose}
+            onClick={handleBackdropClick}
+            className="backdrop:bg-black/60 backdrop:backdrop-blur-sm m-auto max-w-[90vw] w-full md:max-w-md rounded-xl md:rounded-2xl border border-slate-200 bg-white shadow-2xl open:animate-in open:zoom-in-95 open:fade-in-0 dark:border-slate-800 dark:bg-slate-900"
+        >
+            <div className="flex flex-col gap-5 p-6 text-slate-700 dark:text-slate-200">
+                <div className="flex flex-col items-center gap-3 text-center">
+                    <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                        ¿Borrar todos los datos?
+                    </h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Se va a eliminar el estado de todas tus materias, las optativas que elegiste y la carrera seleccionada. Esta acción no se puede deshacer.
+                    </p>
+                </div>
+
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="cursor-pointer rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onConfirm}
+                        className="cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 active:scale-[0.98] dark:bg-red-600 dark:hover:bg-red-500"
+                    >
+                        Sí, borrar todo
+                    </button>
+                </div>
+            </div>
+        </dialog>
+    );
+}
+
 export function ContactModal({ isOpen, onClose }: ModalInfoProps) {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [copied, setCopied] = useState(false);

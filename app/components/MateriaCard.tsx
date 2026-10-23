@@ -4,6 +4,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import SyncOutlinedIcon from '@mui/icons-material/SyncOutlined';
 import { EstadoMateria } from "../types";
+import { parsearCantidadRequerida } from "../lib/diagrama";
 
 export interface DatosMateria {
     codigo: string;
@@ -34,6 +35,7 @@ export interface MateriaCardProps {
     getEstadoInfo?: (codigo: string) => EstadoMateria;
     getOptativaElegida?: (slotCodigo: string) => string | undefined;
     onAbrirModalOptativa?: (slotCodigo: string, grupo: string, optativas: OptativaPosible[]) => void;
+    conteoAprobadas?: number;
 }
 
 const ETIQUETAS_ESTADO: Record<EstadoMateria, string> = {
@@ -71,6 +73,7 @@ export default function MateriaCard({
     getEstadoInfo,
     getOptativaElegida,
     onAbrirModalOptativa,
+    conteoAprobadas,
 }: MateriaCardProps) {
     const isOptativa = materia.esOptativa && materia.grupoOptativa;
     const codigoOptElegida = isOptativa && getOptativaElegida ? getOptativaElegida(materia.codigo) : undefined;
@@ -85,6 +88,9 @@ export default function MateriaCard({
         ? optativaDetalles.correlativas.join(", ")
         : materia.condicion;
 
+    const cantidadRequerida = parsearCantidadRequerida(condicionAMostrar);
+    const cumpleCantidad = cantidadRequerida !== null && conteoAprobadas !== undefined && conteoAprobadas >= cantidadRequerida;
+
     const getRealEstado = () => {
         if (!optativaDetalles) return estado;
         if (getEstadoInfo) return getEstadoInfo(optativaDetalles.codigo);
@@ -95,7 +101,7 @@ export default function MateriaCard({
 
     const getEstilosEstado = () => {
         if (isSeleccionada || isDestacada) {
-            switch (estado) {
+            switch (estadoMostrar) {
                 case "aprobada":
                     return "border-emerald-500 bg-emerald-50 dark:bg-[#0a1a14] shadow-[0_0_12px_rgba(52,211,153,0.3)]";
                 case "regular":
@@ -107,7 +113,7 @@ export default function MateriaCard({
             }
         }
 
-        switch (estado) {
+        switch (estadoMostrar) {
             case "aprobada":
                 return "border-emerald-300 bg-emerald-50/80 backdrop-blur-sm dark:border-emerald-500 dark:bg-[#0a1a14]";
             case "regular":
@@ -153,11 +159,15 @@ export default function MateriaCard({
                         <span className="text-[10px] font-medium leading-tight text-slate-800 dark:text-slate-100 md:text-xs">
                             {nombreAMostrar} {isBloqueada && (<LockOutlinedIcon fontSize="inherit" className="ml-1 text-slate-400 align-middle" />)}
                         </span>
-                        {condicionAMostrar && (
+                        {cantidadRequerida !== null && conteoAprobadas !== undefined ? (
+                            <span className={`mt-0.5 text-[9px] md:text-[10px] ${cumpleCantidad ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"}`}>
+                                {conteoAprobadas}/{cantidadRequerida} aprobadas
+                            </span>
+                        ) : condicionAMostrar ? (
                             <span className="mt-0.5 text-[9px] text-slate-500 dark:text-slate-400 md:text-[10px]">
                                 Req: {condicionAMostrar}
                             </span>
-                        )}
+                        ) : null}
                     </>
                 ) : (
                     <div className="flex flex-1 items-center justify-center py-2">

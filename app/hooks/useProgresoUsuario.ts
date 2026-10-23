@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { EstadoMateria, Materia, Carrera } from "../types";
+import { parsearCantidadRequerida } from "../lib/diagrama";
 
 interface ProgresoUsuario {
     carreraId: string | null;
@@ -10,7 +11,7 @@ interface ProgresoUsuario {
     optativas: Record<string, string>;
 }
 
-const STORAGE_KEY = "plan-estudios-progress";
+export const STORAGE_KEY = "plan-estudios-progress";
 
 /**
  * Migra el formato antiguo (keys sin namespace) al nuevo formato (carrera:codigo).
@@ -177,10 +178,21 @@ export function useProgresoUsuario(
     const setOptativaElegida = useCallback(
         (slotCodigo: string, codigoMateria: string) => {
             if (!carreraActual) return;
-            actualizarProgreso((prev) => ({
-                ...prev,
-                optativas: { ...prev.optativas, [`${carreraActual}:${slotCodigo}`]: codigoMateria },
-            }));
+            actualizarProgreso((prev) => {
+                const nuevasOptativas = { ...prev.optativas };
+                const key = `${carreraActual}:${slotCodigo}`;
+                
+                if (codigoMateria === "") {
+                    delete nuevasOptativas[key];
+                } else {
+                    nuevasOptativas[key] = codigoMateria;
+                }
+
+                return {
+                    ...prev,
+                    optativas: nuevasOptativas,
+                };
+            });
         },
         [actualizarProgreso, carreraActual]
     );
@@ -218,12 +230,23 @@ export function useProgresoUsuario(
                 }
             }
 
-            if (correlativasAevaluar.length === 0) return true;
+            if (correlativasAevaluar.length > 0) {
+                const todasDesbloqueadas = correlativasAevaluar.every((cod) => {
+                    const estado = progreso.materias[`${carreraActual}:${cod}`] || "pendiente";
+                    return estado === "aprobada" || estado === "regular";
+                });
+                if (!todasDesbloqueadas) return false;
+            }
 
-            return correlativasAevaluar.every((cod) => {
-                const estado = progreso.materias[`${carreraActual}:${cod}`] || "pendiente";
-                return estado === "aprobada" || estado === "regular";
-            });
+            const requeridas = parsearCantidadRequerida(materia.condicion);
+            if (requeridas !== null) {
+                const aprobadas = materias.filter(
+                    (m) => progreso.materias[`${carreraActual}:${m.codigo}`] === "aprobada"
+                ).length;
+                if (aprobadas < requeridas) return false;
+            }
+
+            return true;
         },
         [progreso.materias, progreso.optativas, carreraActual]
     );
